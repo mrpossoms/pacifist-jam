@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(example-project VERSION 0.0.1 LANGUAGES CXX)
+project(Njord VERSION 0.0.1 LANGUAGES CXX)
 
 if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
   message(" * C++ compiler: Emscripten")

@@ -1,14 +1,14 @@
-#include "g.h"
+﻿#include "g.h"
 #include "state.hpp"
 
-struct my_game : public g::core
+struct njord : public g::core
 {
 
 	g::asset::store assets;
 	game::state state;
 
-	my_game() = default;
-	~my_game() = default;
+	njord() = default;
+	~njord() = default;
 
 	virtual bool initialize()
 	{
@@ -35,11 +35,11 @@ EM_JS(int, canvas_get_height, (), {
 
 int main (int argc, const char* argv[])
 {
-	my_game game;
+	njord game;
 
 	g::core::opts opts;
 
-	opts.name = "my game";
+	opts.name = "Njord";
 	opts.gfx.fullscreen = false;
 
 #ifdef __EMSCRIPTEN__
