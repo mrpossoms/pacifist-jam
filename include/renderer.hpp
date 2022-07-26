@@ -82,13 +82,16 @@ void draw()
     terrain_mesh.using_shader(assets.shader("terrain.vs+terrain.fs"))
         .set_camera(state.camera)
         ["u_wall"].texture(assets.tex("cliff_wall_color.repeating.png", true))
-        ["u_ground"].texture(assets.tex("earth_color.repeating.png", true))
         ["u_wall_normal"].texture(assets.tex("cliff_wall_normal.repeating.png", true))
+        ["u_sand"].texture(assets.tex("sand.repeating.png", true))
+        ["u_sand_normal"].texture(assets.tex("sand_normal.repeating.png", true))
+        ["u_ground"].texture(assets.tex("earth_color.repeating.png", true))
         ["u_ground_normal"].texture(assets.tex("earth_normal.repeating.png", true))
         ["u_model"].mat4(mat<4, 4>::I())
-        ["u_time"].flt(state.t)
+        ["u_time"].flt(state.t * 0)
         .draw<GL_TRIANGLES>();
 
+    glDisable(GL_CULL_FACE);
     water_mesh.using_shader(assets.shader("water.vs+water.fs"))
         .set_camera(state.camera)
         ["u_wall"].texture(assets.tex("cliff_wall_color.repeating.png", true))
@@ -98,6 +101,7 @@ void draw()
         ["u_model"].mat4(mat<4, 4>::I())
         ["u_time"].flt(state.t)
         .draw<GL_TRIANGLES>();
+    glEnable(GL_CULL_FACE);
 
     g::gfx::debug::print(&state.camera).color({ 1, 0, 0, 1 }).ray(vec<3>{ 0, 0, 0 }, vec<3>{100, 0, 0});
     g::gfx::debug::print(&state.camera).color({ 0, 1, 0, 1 }).ray(vec<3>{ 0, 0, 0 }, vec<3>{0, 100, 0});

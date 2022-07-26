@@ -10,6 +10,8 @@ in mat3 v_basis;
 
 uniform sampler2D u_wall;
 uniform sampler2D u_wall_normal;
+uniform sampler2D u_sand;
+uniform sampler2D u_sand_normal;
 uniform sampler2D u_ground;
 uniform sampler2D u_ground_normal;
 uniform float u_time;
@@ -51,11 +53,21 @@ void main (void)
     wall_normal += texture(u_wall_normal, uvw.xy * 0.4).rbg * w_z;
     // vec4 wall_color = texture(u_wall, uvw.xy * 0.1) * texture(u_wall, uvw.xz * 0.1);
 
-    vec3 textel_norm = (normalize(mix(wall_normal, ground_normal, w)) - 0.5) * 2.0;
+    vec4 sand_color = texture(u_sand, uvw.yz * 0.4) * w_x;
+    sand_color += texture(u_sand, uvw.xz * 0.4) * w_y;
+    sand_color += texture(u_sand, uvw.xy * 0.4) * w_z;
+
+    vec3 sand_normal = texture(u_sand_normal, uvw.yz * 0.4).rbg * w_x;
+    sand_normal += texture(u_sand_normal, uvw.xz * 0.4).rbg * w_y;
+    sand_normal += texture(u_sand_normal, uvw.xy * 0.4).rbg * w_z;
+
+    vec3 textel_norm = (normalize(mix(wall_normal, mix(sand_normal, ground_normal, clamp(v_world_pos.y - 1, 0, 1)), w)) - 0.5) * 2.0;
+    textel_norm = mix(sand_normal, textel_norm, clamp(v_world_pos.y - 3, 0, 1));
     //vec3 textel_norm = vec3(0, 1, 0);//(normalize(mix(wall_normal, ground_normal, w)) - 0.5) * 2.0;
 
     // color = vec4(1.0);
     color = mix(wall_color, ground_color, w);
+    color = mix(sand_color, color, clamp(v_world_pos.y - 3, 0, 1));
 
     color.rgb *= (dot(v_basis * textel_norm, light_dir) + 1) * 0.5;
     // color.rgb *= dot(v_normal, light_dir);
