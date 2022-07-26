@@ -10,6 +10,8 @@ namespace nj
 struct state
 {
 	std::vector<std::vector<nj::cell>> cells;
+	std::vector<vec<2, unsigned>> active_cells;
+
 	g::game::fps_camera camera;
 	g::game::sdf terrain;
 
@@ -53,8 +55,15 @@ struct state
 			for (unsigned c = 0; c < width(); c++)
 			{
 				cells[r][c].elevation = terrain(vec<3>{(float)c, 0, (float)r});
+
+				if (cells[r][c].elevation >= 4)
+				{
+					active_cells.push_back({ r, c });
+				}
 			}
 		}
+
+		std::cerr << "Cells that can host plants: " << active_cells.size() << std::endl;
 	}
 
 	inline size_t width() const { return cells[0].size(); }

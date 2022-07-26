@@ -14,6 +14,8 @@ struct renderer
 g::asset::store assets;
 nj::state& state;
 g::gfx::mesh<g::gfx::vertex::pos_norm_tan> terrain_mesh, water_mesh;
+g::gfx::mesh<g::gfx::vertex::pos_uv_norm> billboard_mesh;
+std::vector<vec<3>> plant_positions;
 
 void init_terrain()
 {
@@ -70,6 +72,8 @@ void init_terrain()
         state.width(),
             state.depth()
             );
+
+    billboard_mesh = g::gfx::mesh_factory::plane();
 }
 
 renderer(nj::state& s, const std::string& data_dir) : state(s), assets(data_dir)
@@ -79,6 +83,18 @@ renderer(nj::state& s, const std::string& data_dir) : state(s), assets(data_dir)
 
 void draw()
 {
+    if (plant_positions.size() != state.active_cells.size())
+    {
+        plant_positions.resize(state.active_cells.size());
+        for (unsigned i = 0; i < state.active_cells.size(); i++)
+        {
+            auto r = state.active_cells[i][0];
+            auto c = state.active_cells[i][1];
+            auto& cell = state.cells[r][c];
+            plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c };
+        }
+    }
+
     terrain_mesh.using_shader(assets.shader("terrain.vs+terrain.fs"))
         .set_camera(state.camera)
         ["u_wall"].texture(assets.tex("cliff_wall_color.repeating.png", true))
@@ -92,6 +108,25 @@ void draw()
         .draw<GL_TRIANGLES>();
 
     glDisable(GL_CULL_FACE);
+
+    constexpr auto batch = 512;
+    for (unsigned i = 0; i < plant_positions.size();)
+    {
+        // TODO: organize the positions in blocks so that they can be culled more easily
+        //if ((plant_positions[i + batch >> 1] - state.camera.position).dot(state.camera.forward()) > 0)
+        {
+            billboard_mesh.using_shader(assets.shader("plants.vs+uvs.fs"))
+                .set_camera(state.camera)
+                ["u_positions"].vec3n(plant_positions.data() + i, batch)
+                .draw<GL_TRIANGLE_FAN>(batch);
+
+        }
+
+        
+        i += std::min<unsigned>(batch, plant_positions.size() - i);
+    }
+
+
     water_mesh.using_shader(assets.shader("water.vs+water.fs"))
         .set_camera(state.camera)
         ["u_wall"].texture(assets.tex("cliff_wall_color.repeating.png", true))
