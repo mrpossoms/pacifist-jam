@@ -91,7 +91,7 @@ void draw()
             auto r = state.active_cells[i][0];
             auto c = state.active_cells[i][1];
             auto& cell = state.cells[r][c];
-            plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c };
+            plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c } + nj::random_norm_vec<3>(state.rng);
         }
     }
 
@@ -112,9 +112,11 @@ void draw()
     constexpr auto batch = 400;
     for (unsigned i = 0; i < plant_positions.size();)
     {
+        auto& middle = plant_positions[i + (batch >> 1)];
         // TODO: organize the positions in blocks so that they can be culled more easily
-        //if ((state.camera.position - plant_positions[i + batch >> 1]).dot(state.camera.forward()) > 0)
+        //if ((middle - state.camera.position).dot(state.camera.forward()) > 0)
         {
+            g::gfx::debug::print(&state.camera).color({ 1, 1, 1, 1 }).ray(middle, vec<3>{0, 10, 0});
             billboard_mesh.using_shader(assets.shader("plants.vs+uvs.fs"))
                 .set_camera(state.camera)
                 ["u_positions"].vec3n(plant_positions.data() + i, batch)

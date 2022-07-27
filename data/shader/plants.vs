@@ -14,10 +14,25 @@ out vec4 v_screen_pos;
 out vec3 v_normal;
 out vec2 v_uv;
 
+mat4 billboard(vec3 bb_pos, mat4 cam_view)
+{
+	vec3 u = vec3(0.0, 1.0, 0.0);
+	vec3 f = normalize(vec3(cam_view[0].z, 0, cam_view[2].z));
+	vec3 r = cross(f, u);
+
+	return mat4(
+		vec4(r, 0),
+		vec4(u, 0),
+		vec4(f, 0),
+		vec4(0, 0, 0, 1)
+	);
+}
+
 void main (void)
 {
-	vec4 v_world_pos = vec4(u_positions[gl_InstanceID], 1.0);
-	v_screen_pos = u_proj * ((u_view * v_world_pos) + vec4(a_position, 0.0));
+	vec3 pos = u_positions[gl_InstanceID];
+	vec4 v_world_pos = vec4(pos, 1.0);
+	v_screen_pos = u_proj * u_view * ((billboard(pos, u_view) * vec4(a_position, 0.0)) + v_world_pos);
 	gl_Position = v_screen_pos;
 
 	v_uv = a_uv;
