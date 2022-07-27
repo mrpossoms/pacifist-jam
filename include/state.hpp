@@ -50,18 +50,45 @@ struct state
 			cells.back().resize(w);
 		}
 
-		for (unsigned r = 0; r < depth(); r++)
-		{
-			for (unsigned c = 0; c < width(); c++)
-			{
-				cells[r][c].elevation = terrain(vec<3>{(float)c, 0, (float)r});
+		auto block_area = 400;
+		unsigned block_side = sqrt(block_area);
 
-				if (cells[r][c].elevation >= 4)
+		auto blocks_r = ceil(depth() / block_side);
+		auto blocks_c = ceil(width() / block_side);
+
+		for (unsigned br = 0; br < blocks_r; br++)
+		{
+			for (unsigned bc = 0; bc < blocks_c; bc++)
+			{
+				auto r = br * block_side, c = bc * block_side;
+
+				for (unsigned ri = r; ri < std::min<unsigned>(depth(), r + block_side); ri++)
 				{
-					active_cells.push_back({ r, c });
+					for (unsigned ci = c; ci < std::min<unsigned>(width(), c + block_side); ci++)
+					{
+						cells[ri][ci].elevation = terrain(vec<3>{(float)ci, 0, (float)ri});
+
+						if (cells[ri][ci].elevation >= 4)
+						{
+							active_cells.push_back({ ri, ci });
+						}
+					}
 				}
 			}
 		}
+
+		//for (unsigned r = 0; r < depth(); r++)
+		//{
+		//	for (unsigned c = 0; c < width(); c++)
+		//	{
+		//		cells[r][c].elevation = terrain(vec<3>{(float)c, 0, (float)r});
+
+		//		if (cells[r][c].elevation >= 4)
+		//		{
+		//			active_cells.push_back({ r, c });
+		//		}
+		//	}
+		//}
 
 		std::cerr << "Cells that can host plants: " << active_cells.size() << std::endl;
 	}

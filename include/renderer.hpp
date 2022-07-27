@@ -109,11 +109,11 @@ void draw()
 
     glDisable(GL_CULL_FACE);
 
-    constexpr auto batch = 512;
+    constexpr auto batch = 400;
     for (unsigned i = 0; i < plant_positions.size();)
     {
         // TODO: organize the positions in blocks so that they can be culled more easily
-        //if ((plant_positions[i + batch >> 1] - state.camera.position).dot(state.camera.forward()) > 0)
+        //if ((state.camera.position - plant_positions[i + batch >> 1]).dot(state.camera.forward()) > 0)
         {
             billboard_mesh.using_shader(assets.shader("plants.vs+uvs.fs"))
                 .set_camera(state.camera)

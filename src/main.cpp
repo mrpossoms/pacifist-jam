@@ -11,7 +11,7 @@ struct njord : public g::core
 
     std::string data_dir = "data";
 
-	njord(int argc, const char* argv[]) : state(512, 512)
+	njord(int argc, const char* argv[]) : state(400, 400)
 	{
         if (argc > 1)
         {
