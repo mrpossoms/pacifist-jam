@@ -37,11 +37,11 @@ struct state
 		terrain = [&](const vec<3>& p) -> float
 		{
 			// TODO: make ground dip outside a set radius
-			auto d = p[1] + 4; // flat plane for now
-			// d += g::gfx::noise::perlin(p, v[2]) * 0.5f;
-			// d += g::gfx::noise::perlin(p * 0.065, v[0]);
-			// d += std::min<float>(0, g::gfx::noise::perlin(p * 0.0234, v[1]) * 40);
-			// d += g::gfx::noise::perlin(p * 0.0123, v[2]) * 80;
+			auto d = p[1]; // flat plane for now
+			d += g::gfx::noise::perlin(p, v[2]) * 0.5f;
+			d += g::gfx::noise::perlin(p * 0.065, v[0]);
+			d += std::min<float>(0, g::gfx::noise::perlin(p * 0.0234, v[1]) * 40);
+			d += g::gfx::noise::perlin(p * 0.0123, v[2]) * 80;
 			return d;
 		};
 

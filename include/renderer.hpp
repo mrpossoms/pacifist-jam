@@ -97,8 +97,8 @@ void draw()
 
     terrain_mesh.using_shader(assets.shader("terrain.vs+terrain.fs"))
         .set_camera(state.camera)
-        ["u_wall"].texture(assets.tex("cliff_wall_color.repeating.png", true))
-        ["u_wall_normal"].texture(assets.tex("cliff_wall_normal.repeating.png", true))
+        ["u_wall"].texture(assets.tex("earth_color.repeating.png", true))
+        ["u_wall_normal"].texture(assets.tex("earth_normal.repeating.png", true))
         ["u_sand"].texture(assets.tex("sand.repeating.png", true))
         ["u_sand_normal"].texture(assets.tex("sand_normal.repeating.png", true))
         ["u_ground"].texture(assets.tex("earth_color.repeating.png", true))
@@ -117,9 +117,10 @@ void draw()
         //if ((middle - state.camera.position).dot(state.camera.forward()) > 0)
         {
             g::gfx::debug::print(&state.camera).color({ 1, 1, 1, 1 }).ray(middle, vec<3>{0, 10, 0});
-            billboard_mesh.using_shader(assets.shader("plants.vs+uvs.fs"))
+            billboard_mesh.using_shader(assets.shader("plants.vs+plants.fs"))
                 .set_camera(state.camera)
                 ["u_positions"].vec3n(plant_positions.data() + i, batch)
+                ["u_plants"].texture(assets.tex("shitty_grass_color.png", true))
                 .draw<GL_TRIANGLE_FAN>(batch);
 
         }
