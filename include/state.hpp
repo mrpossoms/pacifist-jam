@@ -34,7 +34,7 @@ struct state
 			}
 		}
 
-		terrain = [&](const vec<3>& p) -> float
+		terrain = [v](const vec<3>& p) -> float
 		{
 			// TODO: make ground dip outside a set radius
 			auto d = p[1]; // flat plane for now

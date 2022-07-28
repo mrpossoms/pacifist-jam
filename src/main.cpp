@@ -81,6 +81,18 @@ struct njord : public g::core
         state.camera.pre_update(dt, 0);
 
         // todo: collision res
+        g::game::sdf_collider terrain_collider(state.terrain);
+
+        auto intersections = state.camera.intersections(terrain_collider);
+        state.camera.touching_surface = intersections.size() > 0;
+
+        // resolve collisions. This modifies velocities so that the camera will not penetrate
+        // the surface we are colliding with (ground).
+        if (state.camera.touching_surface)
+        {
+            g::dyn::cr::resolve_linear<fps_camera>(state.camera, intersections);
+        }
+
 
         // after velocities have been corrected, update the camera's position
         state.camera.update(dt, 0);
