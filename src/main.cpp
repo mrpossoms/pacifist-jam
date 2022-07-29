@@ -81,7 +81,13 @@ struct njord : public g::core
         state.camera.pre_update(dt, 0);
 
         // todo: collision res
-        g::game::sdf_collider terrain_collider(state.terrain);
+        g::game::heightmap hm([&](const vec<3, int>& p) {
+            auto r = std::max<int>(0, std::min<int>(state.depth()-1, p[2]));
+            auto c = std::max<int>(0, std::min<int>(state.width()-1, p[0]));
+
+            return state.cells[r][c].elevation;
+        });
+        g::game::heightmap_collider terrain_collider(hm);
 
         auto intersections = state.camera.intersections(terrain_collider, 1);
         state.camera.touching_surface = intersections.size() > 0;
@@ -90,6 +96,7 @@ struct njord : public g::core
         // the surface we are colliding with (ground).
         if (state.camera.touching_surface)
         {
+            std::cerr << "touching" << std::endl;
             g::dyn::cr::resolve_linear<fps_camera>(state.camera, intersections);
         }
 
