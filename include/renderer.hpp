@@ -110,7 +110,7 @@ void draw()
     glDisable(GL_CULL_FACE);
 
     constexpr auto batch = 400;
-    for (unsigned i = 0; i < plant_positions.size();)
+    for (unsigned i = 0; i < plant_positions.size() - batch;)
     {
         auto& middle = plant_positions[i + (batch >> 1)];
         // TODO: organize the positions in blocks so that they can be culled more easily

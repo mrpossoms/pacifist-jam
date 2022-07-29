@@ -27,8 +27,9 @@ struct njord : public g::core
 
         // Setup camera input
         auto& cam = state.camera;
-        cam.position = { state.width() / 2.f, 10, state.depth() / 2.f };
+        cam.position = { state.width() / 2.f, 20, state.depth() / 2.f };
         cam.gravity = {0, 0, 0};
+        cam.foot_offset *= 0;
         cam.on_input = [](fps_camera& cam, float dt) {
             static double xlast, ylast;
             float sensitivity = 0.5f;
@@ -52,7 +53,6 @@ struct njord : public g::core
             xlast = xpos; ylast = ypos;
 
             auto speed = cam.speed;
-            speed *= cam.touching_surface ? 1 : 0.1;
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) speed *= (cam.touching_surface ? 5 : 1);
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_W) == GLFW_PRESS) cam.velocity += cam.forward() * speed;
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_S) == GLFW_PRESS) cam.velocity += cam.forward() * -speed;
@@ -83,7 +83,7 @@ struct njord : public g::core
         // todo: collision res
         g::game::sdf_collider terrain_collider(state.terrain);
 
-        auto intersections = state.camera.intersections(terrain_collider);
+        auto intersections = state.camera.intersections(terrain_collider, 1);
         state.camera.touching_surface = intersections.size() > 0;
 
         // resolve collisions. This modifies velocities so that the camera will not penetrate

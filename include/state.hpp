@@ -68,7 +68,13 @@ struct state
 				{
 					for (unsigned ci = c; ci < std::min<unsigned>(width(), c + block_side); ci++)
 					{
-						cells[ri][ci].elevation = terrain(vec<3>{(float)ci, 0, (float)ri});
+						for (unsigned t = 0; t < 10; t++)
+						{
+							auto d = terrain(vec<3>{(float)ci, cells[ri][ci].elevation, (float)ri});
+							cells[ri][ci].elevation += d;
+						}
+
+						assert(isfinite<float>(cells[ri][ci].elevation));
 
 						if (cells[ri][ci].elevation >= 4)
 						{
