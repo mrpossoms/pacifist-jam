@@ -38,6 +38,9 @@ struct state
 		{
 			// TODO: make ground dip outside a set radius
 			auto d = p[1]; // flat plane for now
+
+			// d = p[0];
+
 			d += g::gfx::noise::perlin(p, v[2]) * 0.5f;
 			d += g::gfx::noise::perlin(p * 0.065, v[0]);
 			d += std::min<float>(0, g::gfx::noise::perlin(p * 0.0234, v[1]) * 40);
@@ -69,7 +72,8 @@ struct state
 					for (unsigned ci = c; ci < std::min<unsigned>(width(), c + block_side); ci++)
 					{
 						cells[ri][ci].elevation += terrain(vec<3>{(float)ci, cells[ri][ci].elevation, (float)ri});;
-					
+						cells[ri][ci].max_density = sqrt(cells[ri][ci].elevation);
+
 						assert(isfinite<float>(cells[ri][ci].elevation));
 
 						if (cells[ri][ci].elevation >= 4)

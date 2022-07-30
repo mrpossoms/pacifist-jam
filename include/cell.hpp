@@ -9,6 +9,7 @@ namespace nj
 struct cell : public vec<4>
 {
 	float elevation;
+	float max_density;
 
 	inline float plants(std::optional<float> v = std::nullopt)
 	{ 

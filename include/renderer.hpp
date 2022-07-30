@@ -16,6 +16,7 @@ nj::state& state;
 g::gfx::mesh<g::gfx::vertex::pos_norm_tan> terrain_mesh, water_mesh;
 g::gfx::mesh<g::gfx::vertex::pos_uv_norm> billboard_mesh;
 std::vector<vec<3>> plant_positions;
+std::vector<float> plant_densities;
 
 void init_terrain()
 {
@@ -86,12 +87,14 @@ void draw()
     if (plant_positions.size() != state.active_cells.size())
     {
         plant_positions.resize(state.active_cells.size());
+        plant_densities.resize(state.active_cells.size());
         for (unsigned i = 0; i < state.active_cells.size(); i++)
         {
             auto r = state.active_cells[i][0];
             auto c = state.active_cells[i][1];
             auto& cell = state.cells[r][c];
             plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c } + nj::random_norm_vec<3>(state.rng);
+            plant_densities[i] = cell.max_density;
         }
     }
 
@@ -110,7 +113,7 @@ void draw()
     glDisable(GL_CULL_FACE);
 
     constexpr auto batch = 400;
-    for (unsigned i = 0; i < plant_positions.size() - batch;)
+    for (int i = 0; i < (int)plant_positions.size() - batch;)
     {
         auto& middle = plant_positions[i + (batch >> 1)];
         // TODO: organize the positions in blocks so that they can be culled more easily
@@ -120,6 +123,7 @@ void draw()
             billboard_mesh.using_shader(assets.shader("plants.vs+plants.fs"))
                 .set_camera(state.camera)
                 ["u_positions"].vec3n(plant_positions.data() + i, batch)
+                ["u_max_densities"].fltn(plant_densities.data() + i, batch)
                 ["u_plants"].texture(assets.tex("shitty_grass_color.png", true))
                 .draw<GL_TRIANGLE_FAN>(batch);
 

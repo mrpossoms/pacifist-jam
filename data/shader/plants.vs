@@ -7,6 +7,7 @@ in vec2 a_uv;
 in vec3 a_normal;
 
 uniform vec3 u_positions[400];
+uniform float u_max_densities[400];
 uniform mat4 u_view;
 uniform mat4 u_proj;
 
@@ -32,7 +33,7 @@ void main (void)
 {
 	vec3 pos = u_positions[gl_InstanceID];
 	vec4 v_world_pos = vec4(pos, 1.0);
-	v_screen_pos = u_proj * u_view * ((billboard(pos, u_view) * vec4(a_position, 0.0)) + v_world_pos);
+	v_screen_pos = u_proj * u_view * ((billboard(pos, u_view) * vec4(a_position * u_max_densities[gl_InstanceID], 0.0)) + v_world_pos);
 	gl_Position = v_screen_pos;
 
 	v_uv = a_uv;

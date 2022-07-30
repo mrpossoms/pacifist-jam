@@ -27,7 +27,7 @@ struct njord : public g::core
 
         // Setup camera input
         auto& cam = state.camera;
-        cam.position = { state.width() / 2.f, 20, state.depth() / 2.f };
+        cam.position = { state.width() / 2.f, 200, state.depth() / 2.f };
         cam.gravity = {0, 0, 0};
         cam.foot_offset *= 0;
         cam.on_input = [](fps_camera& cam, float dt) {
@@ -105,6 +105,11 @@ struct njord : public g::core
         state.camera.update(dt, 0);
 
         renderer->draw();
+        auto twoD = state.camera.position + vec<3>{0, 0, 2};
+        twoD[1] = hm.elevation_at(twoD);
+        auto n = (g::game::normal_from(hm, twoD) + vec<3>{1, 1, 1}) * 0.5f;
+        // std::cerr<< n.to_string() << std::endl;
+        g::gfx::debug::print(&state.camera).color({ n[0], n[1], n[2], 1 }).ray(twoD, n);
 
         state.t += dt;
 	}
