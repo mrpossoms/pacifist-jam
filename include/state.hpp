@@ -72,7 +72,7 @@ struct state
 					for (unsigned ci = c; ci < std::min<unsigned>(width(), c + block_side); ci++)
 					{
 						cells[ri][ci].elevation += terrain(vec<3>{(float)ci, cells[ri][ci].elevation, (float)ri});;
-						cells[ri][ci].max_density = sqrt(cells[ri][ci].elevation);
+						cells[ri][ci].density = 0.5;
 
 						assert(isfinite<float>(cells[ri][ci].elevation));
 

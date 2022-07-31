@@ -27,7 +27,7 @@ struct njord : public g::core
 
         // Setup camera input
         auto& cam = state.camera;
-        cam.position = { state.width() / 2.f, 200, state.depth() / 2.f };
+        cam.position = { state.width() / 2.f, state.cells[state.depth() >> 1][state.width() >> 1].elevation + 10, state.depth() / 2.f };
         cam.gravity = {0, 0, 0};
         cam.foot_offset *= 0;
         cam.on_input = [](fps_camera& cam, float dt) {
