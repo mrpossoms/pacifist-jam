@@ -16,7 +16,7 @@ out vec4 v_world_pos;
 out vec4 v_screen_pos;
 out vec3 v_normal;
 out vec2 v_uv;
-out float v_density;
+out float v_plant_density;
 
 vec3 wave(vec3 p, float t)
 {
@@ -36,7 +36,7 @@ vec3 wavy(vec3 p, float t)
    vec3 w1 = wave(p * 0.33, t + 1.125) * 0.33;
    vec3 w2 = wave(p * 0.45, t + 0.125) * 0.033;   
 
-   return (w0 + w1 + w2) * 0.125;
+   return (w0 + w1 + w2) * 0.0; //125;
 }
 
 mat4 billboard(vec3 bb_pos, mat4 cam_view)
@@ -65,7 +65,7 @@ void main (void)
 	v_screen_pos = u_proj * v_world_pos;
 	gl_Position = v_screen_pos;
 
-	v_density = u_densities[gl_InstanceID];
+	v_plant_density = u_densities[gl_InstanceID];
 	v_uv = a_uv;
 
     // mat3 model_rot = mat3(normalize(u_model[0].xyz), normalize(u_model[1].xyz), normalize(u_model[2].xyz));

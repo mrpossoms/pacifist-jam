@@ -1,6 +1,7 @@
 ﻿#include "g.h"
 #include "state.hpp"
 #include "renderer.hpp"
+#include "gameplay.hpp"
 
 struct njord : public g::core
 {
@@ -30,6 +31,7 @@ struct njord : public g::core
         cam.position = { state.width() / 2.f, state.cells[state.depth() >> 1][state.width() >> 1].elevation + 10, state.depth() / 2.f };
         cam.gravity = {0, 0, 0};
         cam.foot_offset *= 0;
+        cam.drag = 0.9;
         cam.on_input = [](fps_camera& cam, float dt) {
             static double xlast, ylast;
             float sensitivity = 0.5f;
@@ -100,6 +102,7 @@ struct njord : public g::core
             g::dyn::cr::resolve_linear<fps_camera>(state.camera, intersections);
         }
 
+        step_world(state, 1);
 
         // after velocities have been corrected, update the camera's position
         state.camera.update(dt, 0);
@@ -112,6 +115,7 @@ struct njord : public g::core
         g::gfx::debug::print(&state.camera).color({ n[0], n[1], n[2], 1 }).ray(twoD, n);
 
         state.t += dt;
+        state.frame += 1;
 	}
 
 };

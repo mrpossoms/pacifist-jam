@@ -94,8 +94,18 @@ void draw()
             auto c = state.active_cells[i][1];
             auto& cell = state.cells[r][c];
             plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c } + nj::random_norm_vec<3>(state.rng);
-            plant_densities[i] = cell.density;
+            plant_densities[i] = cell.plants();
         }
+    }
+
+    // I hate this. Should reorganize state in a DOD fashion so that density states
+    // can be sent along to the gpu directly
+    for (unsigned i = 0; i < state.active_cells.size(); i++)
+    {
+        auto r = state.active_cells[i][0];
+        auto c = state.active_cells[i][1];
+        auto& cell = state.cells[r][c];
+        plant_densities[i] = cell.plants();
     }
 
     terrain_mesh.using_shader(assets.shader("terrain.vs+terrain.fs"))
@@ -117,6 +127,7 @@ void draw()
     auto& bush_tex = assets.tex("bush.clamped.png", true);
     auto& grass_tex = assets.tex("grass.clamped.png", true);
     auto& plant_shaders = assets.shader("plants.vs+plants.fs");
+    auto& debug_shaders = assets.shader("plants.vs+uvs.fs");
     for (int i = 0; i < (int)plant_positions.size() - batch;)
     {
         auto& middle = plant_positions[i + (batch >> 1)];
@@ -127,12 +138,22 @@ void draw()
             billboard_mesh.using_shader(plant_shaders)
                 .set_camera(state.camera)
                 ["u_positions"].vec3n(plant_positions.data() + i, batch)
-                ["u_max_densities"].fltn(plant_densities.data() + i, batch)
+                ["u_densities"].fltn(plant_densities.data() + i, batch)
                 ["u_grass_tex"].texture(grass_tex)
                 ["u_bush_tex"].texture(bush_tex)
                 ["u_tree_tex"].texture(tree_tex)
                 ["u_time"].flt(state.t)
                 .draw<GL_TRIANGLE_FAN>(batch);
+
+            // billboard_mesh.using_shader(debug_shaders)
+            //     .set_camera(state.camera)
+            //     ["u_positions"].vec3n(plant_positions.data() + i, batch)
+            //     ["u_densities"].fltn(plant_densities.data() + i, batch)
+            //     ["u_grass_tex"].texture(grass_tex)
+            //     ["u_bush_tex"].texture(bush_tex)
+            //     ["u_tree_tex"].texture(tree_tex)
+            //     ["u_time"].flt(state.t)
+            //     .draw<GL_LINES>(batch);
 
         }
 

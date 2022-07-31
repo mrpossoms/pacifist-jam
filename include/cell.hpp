@@ -9,7 +9,7 @@ namespace nj
 struct cell : public vec<4>
 {
 	float elevation;
-	float density;
+	float seed;
 
 	inline float plants(std::optional<float> v = std::nullopt)
 	{ 
@@ -34,6 +34,13 @@ struct cell : public vec<4>
 		if (v) { (*this)[3] = v.value(); }
 		return (*this)[3];
 	}
+
+	void operator=(const vec<4>& v)
+	{
+		for (unsigned i = 4; i--;) { this->v[i] = v[i]; }
+	}
+
+	inline bool is_active() const { return elevation >= 4; }
 };
 
 } // namespace nj

@@ -12,12 +12,14 @@ struct state
 {
 	std::vector<std::vector<nj::cell>> cells;
 	std::vector<vec<2, unsigned>> active_cells;
+	// std::vector<<
 
 	g::game::fps_camera camera;
 	g::game::sdf terrain;
 	std::default_random_engine rng;
 
 	float t = 0;
+	unsigned frame = 0;
 
 	state(const size_t w, const size_t d)
 	{
@@ -60,6 +62,7 @@ struct state
 
 		auto blocks_r = ceil(depth() / block_side);
 		auto blocks_c = ceil(width() / block_side);
+		std::normal_distribution<float> norm(0.5f,0.1f);
 
 		for (unsigned br = 0; br < blocks_r; br++)
 		{
@@ -72,16 +75,36 @@ struct state
 					for (unsigned ci = c; ci < std::min<unsigned>(width(), c + block_side); ci++)
 					{
 						cells[ri][ci].elevation += terrain(vec<3>{(float)ci, cells[ri][ci].elevation, (float)ri});;
-						cells[ri][ci].density = 0.5;
+						cells[ri][ci].plants(0);
 
 						assert(isfinite<float>(cells[ri][ci].elevation));
 
-						if (cells[ri][ci].elevation >= 4)
+						if (cells[ri][ci].is_active())
 						{
 							active_cells.push_back({ ri, ci });
 						}
 					}
 				}
+			}
+		}
+
+		std::uniform_int_distribution<int> oasis_start(0, active_cells.size() - 1);
+		auto start = active_cells[oasis_start(rng)].cast<int>();
+
+		cells[start[0]][start[1]].plants(1);
+		{ // spawn around this cell
+			std::uniform_int_distribution<int> plants(5, 15);
+			std::uniform_int_distribution<int> spawn_range(-3, 3);
+			auto max_dist = sqrt(2 * (3 * 3));
+
+			for (auto i = plants(rng); i--;)
+			{
+				auto delta = vec<2, int>{spawn_range(rng), spawn_range(rng)};
+				auto coord = start + delta;
+
+				std::normal_distribution<float> density(1 - (delta.magnitude() / max_dist), 0.2);
+				cells[coord[0]][coord[1]].plants(density(rng));
+				cells[coord[0]][coord[1]].moisture(1);	
 			}
 		}
 
@@ -103,6 +126,13 @@ struct state
 
 	inline size_t width() const { return cells[0].size(); }
 	inline size_t depth() const { return cells.size(); }
+
+	vec<2, int> idx2rc(int i) { 
+		return { 
+			static_cast<int>(i / width()), 
+			static_cast<int>(i % width()) 
+		}; 
+	}
 };
 
 } // namespace game
