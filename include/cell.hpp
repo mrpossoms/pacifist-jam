@@ -8,8 +8,8 @@ namespace nj
 
 struct cell : public vec<4>
 {
-	float elevation;
-	float seed;
+	float elevation = 0;
+	float seed_timer = 0;
 
 	inline float plants(std::optional<float> v = std::nullopt)
 	{ 
