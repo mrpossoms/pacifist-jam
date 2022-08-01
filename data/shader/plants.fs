@@ -5,10 +5,12 @@ precision mediump float;
 in vec2 v_uv;
 in vec4 v_world_pos;
 in float v_plant_density;
+in float v_fire;
 
 uniform sampler2D u_grass_tex;
 uniform sampler2D u_bush_tex;
 uniform sampler2D u_tree_tex;
+uniform sampler2D u_fire_tex;
 uniform float u_time;
 
 out vec4 color;
@@ -47,4 +49,6 @@ void main (void)
     float dim = 1.0 / (abs(v_world_pos.z) * 0.1);
 
     color.rgb *= clamp(dim, 0.5, 1.0);
+
+    color += v_fire * texture(u_fire_tex, v_uv + vec2(0, u_time + v_world_pos.x + v_world_pos.z + sin(u_time + v_uv.x * 10) * 0.25)) * color.a;
 }

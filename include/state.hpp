@@ -1,7 +1,9 @@
 #pragma once
+#include <g.h>
 #include <xmath.h>
 #include <cell.hpp>
 #include <utils.hpp>
+#include <camera.hpp>
 
 using namespace xmath;
 
@@ -10,18 +12,30 @@ namespace nj
 
 struct state
 {
+	int plant_block_size = 225;
 	std::vector<std::vector<nj::cell>> cells;
 	std::vector<vec<2, unsigned>> active_cells;
-	// std::vector<<
+	g::bounded_list<vec<3>, 1024> seed_positions;
+	g::bounded_list<vec<3>, 1024> seed_velocities;
 
-	g::game::fps_camera camera;
+	nj::flying_cam camera;
 	g::game::sdf terrain;
 	std::default_random_engine rng;
+	g::game::heightmap terrain_hm;
+
+	float forrest_density = 0;
+
 
 	float t = 0;
 	unsigned frame = 0;
 
-	state(const size_t w, const size_t d)
+	state(const size_t w, const size_t d) : 
+		terrain_hm([&](const vec<3, int>& p) {
+			auto r = std::max<int>(0, std::min<int>(depth() - 1, p[2]));
+			auto c = std::max<int>(0, std::min<int>(width() - 1, p[0]));
+
+			return cells[r][c].elevation;
+		})
 	{
 		std::vector<int8_t> v[3];
 
@@ -57,12 +71,11 @@ struct state
 			cells.back().resize(w);
 		}
 
-		auto block_area = 400;
-		unsigned block_side = sqrt(block_area);
+		unsigned block_side = sqrt(plant_block_size);
 
 		auto blocks_r = ceil(depth() / block_side);
 		auto blocks_c = ceil(width() / block_side);
-		std::normal_distribution<float> norm(0.5f,0.1f);
+		std::normal_distribution<float> norm(0.5f,0.2f);
 
 		for (unsigned br = 0; br < blocks_r; br++)
 		{
@@ -74,7 +87,8 @@ struct state
 				{
 					for (unsigned ci = c; ci < std::min<unsigned>(width(), c + block_side); ci++)
 					{
-						cells[ri][ci].elevation += terrain(vec<3>{(float)ci, cells[ri][ci].elevation, (float)ri});;
+						cells[ri][ci].elevation += terrain(vec<3>{(float)ci, cells[ri][ci].elevation, (float)ri});
+						cells[ri][ci].moisture(norm(rng));
 						cells[ri][ci].plants(0);
 
 						assert(isfinite<float>(cells[ri][ci].elevation));
@@ -91,7 +105,9 @@ struct state
 		std::uniform_int_distribution<int> oasis_start(0, active_cells.size() - 1);
 		auto start = active_cells[oasis_start(rng)].cast<int>();
 
-		cells[start[0]][start[1]].plants(1);
+		cells[start[0]][start[1]].plants(0.5);
+		cells[start[0]][start[1]].seed(0);
+
 		{ // spawn around this cell
 			std::uniform_int_distribution<int> plants(5, 15);
 			std::uniform_int_distribution<int> spawn_range(-3, 3);
@@ -107,6 +123,8 @@ struct state
 				cells[coord[0]][coord[1]].moisture(1);	
 			}
 		}
+
+		camera.position = vec<3>{ (float)start[1], cells[start[0]][start[1]].elevation + 10, (float)start[0] };
 
 		//for (unsigned r = 0; r < depth(); r++)
 		//{

@@ -16,7 +16,9 @@ nj::state& state;
 g::gfx::mesh<g::gfx::vertex::pos_norm_tan> terrain_mesh, water_mesh;
 g::gfx::mesh<g::gfx::vertex::pos_uv_norm> billboard_mesh;
 std::vector<vec<3>> plant_positions;
+std::vector<float> plant_elevations;
 std::vector<float> plant_densities;
+std::vector<float> plant_fires;
 
 void init_terrain()
 {
@@ -88,13 +90,17 @@ void draw()
     {
         plant_positions.resize(state.active_cells.size());
         plant_densities.resize(state.active_cells.size());
+        plant_elevations.resize(state.active_cells.size());
+        plant_fires.resize(state.active_cells.size());
         for (unsigned i = 0; i < state.active_cells.size(); i++)
         {
             auto r = state.active_cells[i][0];
             auto c = state.active_cells[i][1];
             auto& cell = state.cells[r][c];
-            plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c } + nj::random_norm_vec<3>(state.rng);
+            plant_elevations[i] = cell.elevation;
+            plant_positions[i] = vec<3>{ (float)r, cell.elevation, (float)c } + nj::random_norm_vec<3>(state.rng) * vec<3>{1, 1, 1} + vec<3>{0, 0, 0};
             plant_densities[i] = cell.plants();
+            plant_fires[i] = cell.fire();
         }
     }
 
@@ -106,6 +112,7 @@ void draw()
         auto c = state.active_cells[i][1];
         auto& cell = state.cells[r][c];
         plant_densities[i] = cell.plants();
+        plant_fires[i] = cell.fire();
     }
 
     terrain_mesh.using_shader(assets.shader("terrain.vs+terrain.fs"))
@@ -122,28 +129,36 @@ void draw()
 
     glDisable(GL_CULL_FACE);
 
-    constexpr auto batch = 400;
+    constexpr auto plant_batch = 225;
     auto& tree_tex = assets.tex("tree.clamped.png", true);
     auto& bush_tex = assets.tex("bush.clamped.png", true);
     auto& grass_tex = assets.tex("grass.clamped.png", true);
+    auto& fire_tex = assets.tex("fire_color.repeating.png", true);
     auto& plant_shaders = assets.shader("plants.vs+plants.fs");
     auto& debug_shaders = assets.shader("plants.vs+uvs.fs");
-    for (int i = 0; i < (int)plant_positions.size() - batch;)
+    for (int i = 0; i < (int)plant_positions.size();)
     {
-        auto& middle = plant_positions[i + (batch >> 1)];
+        auto di = std::min<unsigned>(plant_batch, plant_positions.size() - i);
+        auto& middle = plant_positions[i + (di >> 1)];
         // TODO: organize the positions in blocks so that they can be culled more easily
         //if ((middle - state.camera.position).dot(state.camera.forward()) > 0)
         {
-            g::gfx::debug::print(&state.camera).color({ 1, 1, 1, 1 }).ray(middle, vec<3>{0, 10, 0});
             billboard_mesh.using_shader(plant_shaders)
                 .set_camera(state.camera)
-                ["u_positions"].vec3n(plant_positions.data() + i, batch)
-                ["u_densities"].fltn(plant_densities.data() + i, batch)
+                //["u_elevations"].fltn(plant_elevations.data() + i, di)
+                ["u_positions"].vec3n(plant_positions.data() + i, di)
+                ["u_densities"].fltn(plant_densities.data() + i, di)
+                ["u_fires"].fltn(plant_fires.data() + i, di)
+                ["u_block_width"].int1(sqrt(state.plant_block_size))
+                ["u_block_depth"].int1(sqrt(state.plant_block_size))
                 ["u_grass_tex"].texture(grass_tex)
                 ["u_bush_tex"].texture(bush_tex)
                 ["u_tree_tex"].texture(tree_tex)
+                ["u_fire_tex"].texture(fire_tex)
+                ["u_cam_pos"].vec3(state.camera.position)
+                ["u_cam_vel"].vec3(state.camera.velocity)
                 ["u_time"].flt(state.t)
-                .draw<GL_TRIANGLE_FAN>(batch);
+                .draw<GL_TRIANGLE_FAN>(di);
 
             // billboard_mesh.using_shader(debug_shaders)
             //     .set_camera(state.camera)
@@ -158,14 +173,47 @@ void draw()
         }
 
         
-        i += std::min<unsigned>(batch, plant_positions.size() - i);
+        i += di;
     }
 
 
+    auto seed_batch = 512;
+    auto& seed_tex = assets.tex("seed_color.png", true);
+    auto& seed_shaders = assets.shader("seeds.vs+textured.fs");
+    for (int i = 0; i < state.seed_positions.size();)
+    {
+        auto di = std::min<unsigned>(seed_batch, state.seed_positions.size() - i);
+
+        // TODO: organize the positions in blocks so that they can be culled more easily
+        //if ((middle - state.camera.position).dot(state.camera.forward()) > 0)
+        {
+            billboard_mesh.using_shader(seed_shaders)
+                .set_camera(state.camera)
+                ["u_positions"].vec3n(state.seed_positions.list() + i, di)
+                ["u_tex"].texture(seed_tex)
+                ["u_time"].flt(state.t)
+                .draw<GL_TRIANGLE_FAN>(di);
+
+            // billboard_mesh.using_shader(debug_shaders)
+            //     .set_camera(state.camera)
+            //     ["u_positions"].vec3n(plant_positions.data() + i, batch)
+            //     ["u_densities"].fltn(plant_densities.data() + i, batch)
+            //     ["u_grass_tex"].texture(grass_tex)
+            //     ["u_bush_tex"].texture(bush_tex)
+            //     ["u_tree_tex"].texture(tree_tex)
+            //     ["u_time"].flt(state.t)
+            //     .draw<GL_LINES>(batch);
+
+        }
+
+
+        i += di;
+    }
+
     water_mesh.using_shader(assets.shader("water.vs+water.fs"))
         .set_camera(state.camera)
-        ["u_wall"].texture(assets.tex("cliff_wall_color.repeating.png", true))
-        ["u_ground"].texture(assets.tex("earth_color.repeating.png", true))
+        ["u_wall"].texture(assets.tex("water_color.repeating.png", true))
+        ["u_ground"].texture(assets.tex("white_cap_color.repeating.png", true))
         ["u_wall_normal"].texture(assets.tex("cliff_wall_normal.repeating.png", true))
         ["u_ground_normal"].texture(assets.tex("earth_normal.repeating.png", true))
         ["u_model"].mat4(mat<4, 4>::I())

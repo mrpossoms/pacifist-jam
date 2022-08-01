@@ -12,7 +12,7 @@ struct njord : public g::core
 
     std::string data_dir = "data";
 
-	njord(int argc, const char* argv[]) : state(200, 200)
+	njord(int argc, const char* argv[]) : state(300, 300)
 	{
         if (argc > 1)
         {
@@ -28,11 +28,9 @@ struct njord : public g::core
 
         // Setup camera input
         auto& cam = state.camera;
-        cam.position = { state.width() / 2.f, state.cells[state.depth() >> 1][state.width() >> 1].elevation + 10, state.depth() / 2.f };
-        cam.gravity = {0, 0, 0};
-        cam.foot_offset *= 0;
-        cam.drag = 0.9;
-        cam.on_input = [](fps_camera& cam, float dt) {
+        cam.drag = 1;
+        cam.speed = 20;
+        cam.on_input = [](nj::flying_cam& cam, float dt) {
             static double xlast, ylast;
             float sensitivity = 0.5f;
             double xpos = 0, ypos = 0;
@@ -48,16 +46,20 @@ struct njord : public g::core
                 {
                     auto dx = xpos - xlast;
                     auto dy = ypos - ylast;
-                    cam.pitch += (dy * dt * sensitivity);
-                    cam.yaw += (-dx * dt * sensitivity);
+                    cam.d_pitch(dy * dt * sensitivity);
+                    cam.d_roll(dx * dt * sensitivity);
+                   
                 }
 
             xlast = xpos; ylast = ypos;
 
-            auto speed = cam.speed;
+            auto speed = cam.speed * dt;
+            cam.velocity += cam.forward() * speed;
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) speed *= (cam.touching_surface ? 5 : 1);
+            if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_Q) == GLFW_PRESS) cam.d_yaw(-speed * dt);
+            if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_E) == GLFW_PRESS) cam.d_yaw(speed * dt);
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_W) == GLFW_PRESS) cam.velocity += cam.forward() * speed;
-            if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_S) == GLFW_PRESS) cam.velocity += cam.forward() * -speed;
+            if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_S) == GLFW_PRESS) cam.velocity += cam.forward() * -speed * 0.5;
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_A) == GLFW_PRESS) cam.velocity += cam.left() * -speed;
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_D) == GLFW_PRESS) cam.velocity += cam.left() * speed;
             if (glfwGetKey(g::gfx::GLFW_WIN, GLFW_KEY_SPACE) == GLFW_PRESS) cam.velocity += cam.up() * 5 * cam.touching_surface;
@@ -82,15 +84,7 @@ struct njord : public g::core
         // process input and update the velocities.
         state.camera.pre_update(dt, 0);
 
-        // todo: collision res
-        g::game::heightmap hm([&](const vec<3, int>& p) {
-            auto r = std::max<int>(0, std::min<int>(state.depth()-1, p[2]));
-            auto c = std::max<int>(0, std::min<int>(state.width()-1, p[0]));
-
-            return state.cells[r][c].elevation;
-        });
-        g::game::heightmap_collider terrain_collider(hm);
-
+        g::game::heightmap_collider terrain_collider(state.terrain_hm);
         auto intersections = state.camera.intersections(terrain_collider, 1);
         state.camera.touching_surface = intersections.size() > 0;
 
@@ -99,7 +93,7 @@ struct njord : public g::core
         if (state.camera.touching_surface)
         {
             std::cerr << "touching" << std::endl;
-            g::dyn::cr::resolve_linear<fps_camera>(state.camera, intersections);
+            g::dyn::cr::resolve_linear<nj::flying_cam>(state.camera, intersections);
         }
 
         step_world(state, 1);
@@ -109,8 +103,8 @@ struct njord : public g::core
 
         renderer->draw();
         auto twoD = state.camera.position + vec<3>{0, 0, 2};
-        twoD[1] = hm.elevation_at(twoD);
-        auto n = (g::game::normal_from(hm, twoD) + vec<3>{1, 1, 1}) * 0.5f;
+        twoD[1] = state.terrain_hm.elevation_at(twoD);
+        auto n = (g::game::normal_from(state.terrain_hm, twoD) + vec<3>{1, 1, 1}) * 0.5f;
         // std::cerr<< n.to_string() << std::endl;
         g::gfx::debug::print(&state.camera).color({ n[0], n[1], n[2], 1 }).ray(twoD, n);
 

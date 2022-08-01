@@ -35,6 +35,11 @@ struct cell : public vec<4>
 		return (*this)[3];
 	}
 
+	void operator+=(const vec<4>& v)
+	{
+		for (unsigned i = 4; i--;) { this->v[i] += v[i]; }
+	}
+
 	void operator=(const vec<4>& v)
 	{
 		for (unsigned i = 4; i--;) { this->v[i] = v[i]; }
